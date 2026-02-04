@@ -1,0 +1,321 @@
+Build a professional, modern, full-stack e-commerce & services web application called DR Gabriel.
+
+🧠 General Requirements
+
+Use a modern tech stack (React / Next.js frontend, Node.js + Express backend, MongoDB or PostgreSQL).
+
+Fully responsive (desktop, tablet, mobile).
+
+Clean, medical-wellness inspired UI (professional, trustworthy, premium).
+
+Authentication system (Users & Admins).
+
+Role-based access control (User / Admin / Super Admin).
+
+Secure APIs.
+
+Professional admin dashboard.
+
+Use reusable components.
+
+Use SEO-friendly structure.
+
+🏠 Homepage Requirements
+
+The homepage must professionally display products and services categories:
+
+Product & Service Categories:
+
+Immune Boosters
+
+Sport Fit
+
+Women’s Beauty
+
+Heart & Blood Fit
+
+Smart Kids
+
+Men’s Power
+
+Suma Fit
+
+Suma Living
+
+Homepage Behavior:
+
+Display featured products and services.
+
+Liked/favorited products or services should appear first for logged-in users.
+
+Trending products/services highlighted.
+
+Urgent news banner (if added by admin).
+
+Clean call-to-action buttons.
+
+🛒 Products
+Product Features:
+
+Product image gallery
+
+Full product details page
+
+Price
+
+Add to cart
+
+Compare products
+
+Like / favorite products
+
+Reviews (only logged-in users can review)
+
+Ratings
+
+WhatsApp chat button (admin-defined WhatsApp link)
+
+Product Delivery Flow:
+
+Clicking “Order / Add to Cart” opens a Delivery Details Page
+
+User selects:
+
+County (All counties in Kenya)
+
+Sub-County
+
+Location / Area (e.g. Kasarani, Embakasi, etc.)
+
+User enters:
+
+Delivery address
+
+Phone number
+
+After filling all required fields:
+
+A “Proceed to WhatsApp” button appears
+
+Button opens Admin’s WhatsApp with:
+
+Product details
+
+Quantity
+
+User location
+
+Delivery address
+
+User phone number
+
+🔄 Product Comparison
+
+Users can select multiple products
+
+Side-by-side comparison table
+
+Compare price, benefits, category, ratings
+
+🩺 Services
+Service Features:
+
+Service details page
+
+Description, benefits, images
+
+Book appointment button
+
+Chat with admin button
+
+Booking Flow:
+
+Clicking Book Appointment opens a Service Details Form
+
+User selects:
+
+Preferred date
+
+Location they live
+
+Office/location where service will be provided
+
+Admin can:
+
+Add
+
+Edit
+
+Remove service offices/locations
+
+Submit button opens WhatsApp with:
+
+Service name
+
+Preferred date
+
+Selected office
+
+User location
+
+📰 News & Offers Section
+News Features:
+
+Admins can add:
+
+News
+
+Offers
+
+Trending items
+
+Urgent news
+
+News cards display:
+
+Title
+
+Short description
+
+Admin photo/logo
+
+Admin name
+
+Date posted
+
+Urgent News:
+
+Urgent news appears:
+
+At the top of the website
+
+Styled differently (highlighted, alert-style)
+
+Urgent news detail page includes:
+
+WhatsApp button to chat with admin
+
+News Details Page:
+
+Full content
+
+Images
+
+Admin profile info
+
+WhatsApp contact button
+
+Newsletter:
+
+Users can subscribe with email
+
+Admin can send news/offers to subscribers
+
+👤 User Accounts
+User Profile:
+
+Edit username
+
+Edit profile photo/logo
+
+Email change requires admin approval
+
+View liked products/services
+
+View orders & appointments
+
+View reviews posted
+
+🧑‍💼 Admin Dashboard
+
+The admin dashboard must be very professional and clean.
+
+Admin Capabilities:
+
+Add / Edit / Remove:
+
+Products
+
+Services
+
+Service offices/locations
+
+News
+
+Offers
+
+Upload images
+
+Manage WhatsApp links
+
+Mark news as urgent
+
+Manage users:
+
+Add users
+
+Remove users
+
+Upgrade user to admin
+
+Manage admins:
+
+Add admin
+
+Remove admin
+
+Approve or reject email change requests
+
+Dashboard analytics (orders, services booked, users, popular products)
+
+🗺️ Locations Data
+
+Include all counties in Kenya
+
+Each county includes:
+
+Sub-counties
+
+Locations/areas
+
+Data should be selectable via dropdowns
+
+🎨 UI/UX Design
+
+Professional medical & wellness theme
+
+Clean typography
+
+Soft colors
+
+Icons
+
+Smooth animations
+
+Clear navigation
+
+Accessibility friendly
+
+🔐 Security
+
+Secure authentication
+
+Protected admin routes
+
+Input validation
+
+Prevent unauthorized access
+
+🚀 Final Deliverables
+
+Fully working web application
+
+Clean project structure
+
+Ready for deployment
+
+Admin credentials seeded
+
+Sample products, services, news, and locations included
+
+Build this application completely and professionally as a production-ready system named DR Gabriel.
