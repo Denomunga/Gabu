@@ -9,8 +9,17 @@ dotenv.config();
 const app = express();
 
 // Security Middleware - CORS
+// Allow multiple client origins via `CLIENT_URL` env var (comma-separated).
+const rawClientUrls = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = rawClientUrls.split(",").map((s) => s.trim()).filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., server-to-server, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
