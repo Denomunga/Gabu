@@ -8,6 +8,14 @@ dotenv.config();
 
 const app = express();
 
+// Debug middleware: log incoming origin and auth header presence
+app.use((req, _res, next) => {
+  console.log(`[DEBUG] Incoming request: ${req.method} ${req.path}`);
+  console.log("[DEBUG] Origin:", req.headers.origin);
+  console.log("[DEBUG] Authorization header present:", !!req.headers.authorization);
+  next();
+});
+
 // Security Middleware - CORS
 // Allow multiple client origins via `CLIENT_URL` env var (comma-separated).
 const rawClientUrls = process.env.CLIENT_URL || "http://localhost:5173";

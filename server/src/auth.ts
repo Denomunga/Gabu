@@ -42,12 +42,24 @@ export async function authenticateUser(
 }
 
 export function requireAuth(req: any, res: any, next: any) {
-  const token = req.headers.authorization?.split(" ")[1];
+  const rawAuth = req.headers.authorization;
+  if (rawAuth) {
+    // mask token body for logs
+    const masked = rawAuth.replace(/Bearer\s+(.{4}).*(.{4})/, 'Bearer $1...$2');
+    console.log('[DEBUG] requireAuth - Authorization header:', masked);
+  } else {
+    console.log('[DEBUG] requireAuth - Authorization header: none');
+  }
+
+  const token = rawAuth?.split(" ")[1];
+  console.log('[DEBUG] requireAuth - token length:', token ? token.length : 0);
+
   if (!token) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   const decoded = verifyToken(token);
+  console.log('[DEBUG] requireAuth - token decoded:', decoded);
   if (!decoded) {
     return res.status(401).json({ message: "Invalid token" });
   }
