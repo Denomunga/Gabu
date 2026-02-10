@@ -1,10 +1,12 @@
 import { Product } from "@shared/schema";
 import { Link } from "wouter";
-import { ShoppingCart, Star } from "lucide-react";
+import { ShoppingCart, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
+import { useFavorites } from "@/hooks/use-favorites";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { API_URL } from "@/lib/api";
 
 interface ProductCardProps {
   product: Product;
@@ -12,7 +14,10 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const addItem = useCart((state) => state.addItem);
+  const { toggleFavorite, isFavorite, isAuthenticated } = useFavorites();
   const { toast } = useToast();
+
+  const productId = (product._id || product.id)?.toString() || '';
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,17 +28,50 @@ export function ProductCard({ product }: ProductCardProps) {
     });
   };
 
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to add favorites",
+      });
+      return;
+    }
+
+    try {
+      await toggleFavorite(productId);
+      // State will be updated by the hook, no need for optimistic update
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update favorite status",
+      });
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="group relative bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-300 overflow-hidden flex flex-col h-full"
     >
-      <Link href={`/products/${product.id}`} className="block relative aspect-square overflow-hidden bg-white">
+        <Link href={`/products/${product._id || product.id}`} className="block relative aspect-square overflow-hidden bg-white">
+        {/* Favorite Button */}
+        <button
+          onClick={handleToggleFavorite}
+          className="absolute top-3 right-3 z-10 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-colors"
+        >
+          <Heart 
+            className={`w-4 h-4 ${isFavorite((product._id || product.id)?.toString() || '') ? "fill-red-500 text-red-500" : "text-gray-600"}`} 
+          />
+        </button>
+        
         {/* Descriptive alt text and Unsplash handling happens in parent/data, here we use what's given */}
         {product.images?.[0] ? (
           <img
-            src={product.images[0]}
+            src={product.images[0].startsWith('http') ? product.images[0] : `${API_URL}${product.images[0]}`}
             alt={product.name}
             className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-110"
           />
@@ -60,7 +98,7 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <div className="p-4 flex flex-col flex-grow">
-        <Link href={`/products/${product.id}`}>
+        <Link href={`/products/${product._id || product.id}`}>
           <h3 className="font-display font-semibold text-lg text-foreground mb-1 group-hover:text-primary transition-colors line-clamp-1">
             {product.name}
           </h3>
@@ -81,7 +119,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
           <span className="font-display font-bold text-xl text-primary">
-            KES {(product.price / 100).toLocaleString()}
+            KES {product.price ? product.price.toLocaleString() : "Price unavailable"}
           </span>
           <Button size="sm" onClick={handleAddToCart} className="gap-2 rounded-full">
             <ShoppingCart className="w-4 h-4" />
@@ -92,3 +130,4 @@ export function ProductCard({ product }: ProductCardProps) {
     </motion.div>
   );
 }
+

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PRODUCT_CATEGORIES } from "@shared/schema";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useFavorites } from "@/hooks/use-favorites";
 
 export default function Shop() {
   const [search, setSearch] = useState("");
@@ -16,6 +17,9 @@ export default function Shop() {
     search: search || undefined,
     category: category 
   });
+  const { sortProductsByFavorites } = useFavorites();
+
+  const sortedProducts = sortProductsByFavorites(products);
 
   const clearFilters = () => {
     setSearch("");
@@ -112,17 +116,17 @@ export default function Shop() {
                   <div key={i} className="h-[400px] bg-secondary/50 rounded-xl animate-pulse" />
                 ))}
               </div>
-            ) : products?.length === 0 ? (
+            ) : sortedProducts?.length === 0 ? (
               <div className="text-center py-20 bg-secondary/20 rounded-2xl border border-dashed border-border">
                 <h3 className="text-lg font-medium text-muted-foreground">No products found</h3>
                 <p className="text-sm text-muted-foreground mt-2">Try adjusting your search or filters.</p>
-                <Button variant="link" onClick={clearFilters} className="mt-4 text-primary">
+                <Button variant="ghost" onClick={clearFilters} className="mt-4 text-primary">
                   Clear all filters
                 </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products?.map((product) => (
+                {sortedProducts?.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>

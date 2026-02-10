@@ -1,9 +1,22 @@
 import { storage } from "./storage";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
-import { PRODUCT_CATEGORIES } from "@shared/schema";
+import { connectMongo, getMongoDb, getNextId } from "./mongo";
+import { mkdir, readFile, writeFile } from "fs/promises";
+import path from "path";
+import dotenv from "dotenv";
 
 const scryptAsync = promisify(scrypt);
+
+const KENYA_LOCATIONS_DATA_FILE = path.resolve(
+  process.cwd(),
+  "server",
+  "data",
+  "Kenya-Counties-SubCounties-and-Wards.json",
+);
+
+const KENYA_LOCATIONS_DATA_URL =
+  "https://raw.githubusercontent.com/alvinchesaro/Kenya-Counties-SubCounties-and-Wards/main/Kenya-Counties-SubCounties-and-Wards.json";
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -12,6 +25,8 @@ async function hashPassword(password: string) {
 }
 
 async function seed() {
+  dotenv.config({ path: path.resolve(process.cwd(), "server", ".env") });
+  await connectMongo();
   console.log("Seeding database...");
 
   // Check if admin exists
@@ -24,9 +39,69 @@ async function seed() {
       role: "admin",
       email: "admin@drgabriel.com",
       phone: "+254700000000",
+      whatsappNumber: "254700000000",
       location: "Nairobi, Kenya"
     });
     console.log("Admin user created (admin / admin123)");
+  }
+
+  const settings = await storage.getSiteSettings();
+  if (!settings) {
+    await storage.upsertSiteSettings({
+      defaultWhatsappNumber: "254700000000",
+      showUrgentBanner: true,
+    });
+    console.log("Site settings seeded");
+  }
+
+  const existingCounties = await storage.getKenyaCounties();
+  if (existingCounties.length === 0) {
+    let raw: string;
+    try {
+      raw = await readFile(KENYA_LOCATIONS_DATA_FILE, "utf-8");
+    } catch {
+      const res = await fetch(KENYA_LOCATIONS_DATA_URL);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch Kenya locations data: ${res.status}`);
+      }
+      raw = await res.text();
+      await mkdir(path.dirname(KENYA_LOCATIONS_DATA_FILE), { recursive: true });
+      await writeFile(KENYA_LOCATIONS_DATA_FILE, raw, "utf-8");
+    }
+
+    const data = JSON.parse(raw) as Record<string, Record<string, string[]>>;
+    const countyEntries = Object.entries(data);
+
+    const mongoDb = getMongoDb();
+
+    for (const [countyName, subCounties] of countyEntries) {
+      const countyId = await getNextId("kenyaCounties");
+      await mongoDb.collection("kenyaCounties").insertOne({ id: countyId, name: countyName });
+
+      const subCountyEntries = Object.entries(subCounties);
+      for (const [subCountyName, wards] of subCountyEntries) {
+        const subCountyId = await getNextId("kenyaSubCounties");
+        await mongoDb.collection("kenyaSubCounties").insertOne({
+          id: subCountyId,
+          countyId: countyId,
+          name: subCountyName,
+        });
+
+        if (wards.length > 0) {
+          await mongoDb.collection("kenyaAreas").insertMany(
+            await Promise.all(
+              wards.map(async (wardName) => ({
+                id: await getNextId("kenyaAreas"),
+                subCountyId: subCountyId,
+                name: wardName,
+              })),
+            ),
+          );
+        }
+      }
+    }
+
+    console.log("Kenya locations seeded");
   }
 
   // Check products
@@ -35,7 +110,7 @@ async function seed() {
     await storage.createProduct({
       name: "Super Immune Vitamin C",
       description: "High potency Vitamin C 1000mg with Zinc for maximum immune support. Great for daily use.",
-      price: 1500, // 1500 KES
+      price: 150000, // 1500 KES
       category: "Immune Boosters",
       images: ["https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=800"],
       isFeatured: true,
@@ -46,7 +121,7 @@ async function seed() {
     await storage.createProduct({
       name: "Whey Protein Isolate",
       description: "Premium grass-fed whey protein isolate for muscle recovery and growth. Chocolate flavor.",
-      price: 4500,
+      price: 450000,
       category: "Sport Fit",
       images: ["https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&q=80&w=800"],
       isFeatured: true,
@@ -57,7 +132,7 @@ async function seed() {
     await storage.createProduct({
       name: "Collagen Beauty Complex",
       description: "Hydrolyzed collagen peptides for radiant skin, hair, and nails. Unflavored.",
-      price: 3200,
+      price: 320000,
       category: "Women's Beauty",
       images: ["https://images.unsplash.com/photo-1594405230635-c54d35b9d363?auto=format&fit=crop&q=80&w=800"],
       isFeatured: true,
@@ -68,7 +143,7 @@ async function seed() {
     await storage.createProduct({
       name: "Kids Multivitamin Gummies",
       description: "Delicious fruit-flavored gummies packed with essential vitamins for growing kids.",
-      price: 1800,
+      price: 180000,
       category: "Smart Kids",
       images: ["https://images.unsplash.com/photo-1624638760976-4314d485eef4?auto=format&fit=crop&q=80&w=800"],
       isFeatured: false,
@@ -79,7 +154,7 @@ async function seed() {
     await storage.createProduct({
       name: "Men's Energy Booster",
       description: "Natural herbal blend to support energy, stamina, and vitality in men.",
-      price: 2500,
+      price: 250000,
       category: "Men's Power",
       images: ["https://images.unsplash.com/photo-1616612666506-694c92476d1e?auto=format&fit=crop&q=80&w=800"],
       isFeatured: true,
@@ -132,6 +207,42 @@ async function seed() {
       imageUrl: "https://images.unsplash.com/photo-1584362917165-526a968579e8?auto=format&fit=crop&q=80&w=800"
     });
     console.log("News seeded");
+  }
+
+  // Seed service offices
+  const existingOffices = await storage.getServiceOffices();
+  if (existingOffices.length === 0) {
+    await storage.createServiceOffice({
+      name: "DR Gabriel Main Clinic - Nairobi",
+      address: "Mombasa Road, Opposite Nyayo Stadium",
+      county: "Nairobi",
+      subCounty: "Nairobi",
+      area: "Nairobi CBD",
+      phone: "+254700000001",
+      isActive: true
+    });
+
+    await storage.createServiceOffice({
+      name: "DR Gabriel Wellness Center - Westlands",
+      address: "Sarit Centre, 2nd Floor",
+      county: "Nairobi", 
+      subCounty: "Nairobi",
+      area: "Westlands",
+      phone: "+254700000002",
+      isActive: true
+    });
+
+    await storage.createServiceOffice({
+      name: "DR Gabriel Medical Hub - Mombasa",
+      address: "Digo Road, Next to Mombasa Hospital",
+      county: "Mombasa",
+      subCounty: "Mombasa",
+      area: "Mombasa Island",
+      phone: "+254700000003",
+      isActive: true
+    });
+
+    console.log("Service offices seeded");
   }
 
   console.log("Seeding complete!");

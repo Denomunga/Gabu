@@ -1,0 +1,26 @@
+{
+  "buildCommand": "npm install && npm run build",
+  "startCommand": "npm start",
+  "envVars": {
+    "NODE_ENV": {
+      "description": "Environment",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Server port",
+      "value": "3000"
+    },
+    "MONGODB_URI": {
+      "description": "MongoDB connection string",
+      "value": ""
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret key",
+      "value": ""
+    },
+    "CLIENT_URL": {
+      "description": "Client URL",
+      "value": ""
+    }
+  }
+}

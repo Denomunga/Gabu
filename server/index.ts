@@ -1,7 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { connectMongo } from "./mongo";
+import dotenv from "dotenv";
+import path from "path";
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +25,8 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+// Allow CORS from the frontend during development
+app.use(cors({ origin: process.env.CORS_ORIGIN || true, credentials: true }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -60,6 +66,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  dotenv.config({ path: path.resolve(process.cwd(), "server", ".env") });
+  await connectMongo();
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -90,14 +98,17 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  const listenOptions: any = {
+    port,
+    host: "0.0.0.0",
+  };
+  if (process.platform !== "win32") {
+    listenOptions.reusePort = true;
+  }
+
+  httpServer.listen(listenOptions, () => {
+    log(`serving on port ${port}`);
+    log(`frontend: http://localhost:${port}`);
+    log(`api: http://localhost:${port}/api`);
+  });
 })();

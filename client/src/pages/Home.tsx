@@ -3,13 +3,20 @@ import { ArrowRight, CheckCircle2, Truck, ShieldCheck, Clock } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/ProductCard";
 import { ServiceCard } from "@/components/ServiceCard";
+import { NewsCard } from "@/components/NewsCard";
 import { useProducts } from "@/hooks/use-products";
 import { useServices } from "@/hooks/use-services";
+import { useNews } from "@/hooks/use-news";
+import { useFavorites } from "@/hooks/use-favorites";
 import { motion } from "framer-motion";
 
 export default function Home() {
   const { data: featuredProducts, isLoading: loadingProducts } = useProducts({ isFeatured: true });
   const { data: services, isLoading: loadingServices } = useServices();
+  const { data: news, isLoading: loadingNews } = useNews();
+  const { sortProductsByFavorites } = useFavorites();
+
+  const sortedFeaturedProducts = sortProductsByFavorites(featuredProducts);
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,11 +129,55 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {featuredProducts?.slice(0, 4).map((product) => (
+              {sortedFeaturedProducts?.slice(0, 4).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* News & Offers Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-display font-bold mb-2">Latest News & Offers</h2>
+              <p className="text-muted-foreground">Stay updated with our latest announcements and special deals</p>
+            </div>
+            <Link href="/news">
+              <Button variant="ghost" className="hidden sm:flex group">
+                View All <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+
+          {loadingNews ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-96 bg-secondary/50 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : news && news.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {news.slice(0, 3).map((newsItem) => (
+                <NewsCard key={newsItem._id || newsItem.id} news={newsItem} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-secondary/20 rounded-2xl border border-dashed border-border">
+              <h3 className="text-lg font-medium text-muted-foreground">No news yet</h3>
+              <p className="text-sm text-muted-foreground mt-2">Check back later for updates and offers.</p>
+            </div>
+          )}
+
+          <div className="mt-12 text-center">
+            <Link href="/news">
+              <Button size="lg" className="rounded-full">
+                View All News <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

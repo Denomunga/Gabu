@@ -39,7 +39,7 @@ export function Navbar() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
                 <Package className="w-5 h-5" />
               </div>
-              MediStore
+              Dr Gabriel
             </Link>
 
             <div className="hidden md:flex items-center gap-6">
@@ -86,6 +86,12 @@ export function Navbar() {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
                   {isAdmin && (
                     <DropdownMenuItem asChild>
                       <Link href="/admin">Dashboard</Link>
@@ -129,6 +135,14 @@ export function Navbar() {
                     </Link>
                   ))}
                   <hr className="my-2" />
+                  {user && (
+                    <Link href="/profile" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        Profile
+                      </Button>
+                    </Link>
+                  )}
                   {!user && (
                     <>
                       <Link href="/login" onClick={() => setIsOpen(false)}>

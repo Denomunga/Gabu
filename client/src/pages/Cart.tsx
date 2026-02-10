@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { api } from "@shared/routes";
 import { useUser } from "@/hooks/use-auth";
+import { API_URL } from "@/lib/api";
 
 export default function Cart() {
   const { items, total, removeItem, updateQuantity, clearCart } = useCart();
@@ -35,10 +36,10 @@ export default function Cart() {
       // 1. Create order in DB
       const orderData = {
         items: items.map(i => ({
-          productId: i.id,
+          productId: Number(i.id),
           name: i.name,
           quantity: i.quantity,
-          price: i.price
+          price: i.price || 0
         })),
         totalAmount: total,
         deliveryInfo
@@ -52,8 +53,8 @@ export default function Cart() {
         `Phone: ${deliveryInfo.phone}\n` +
         `Location: ${deliveryInfo.location}, ${deliveryInfo.county}\n\n` +
         `*Items:*\n` +
-        items.map(i => `- ${i.name} x${i.quantity} @ KES ${(i.price / 100).toLocaleString()}`).join('\n') +
-        `\n\n*Total: KES ${(total / 100).toLocaleString()}*`;
+        items.map(i => `- ${i.name} x${i.quantity} @ KES ${(i.price || 0).toLocaleString()}`).join('\n') +
+        `\n\n*Total: KES ${total.toLocaleString()}*`;
 
       const encodedMessage = encodeURIComponent(message);
       const whatsappUrl = `https://wa.me/254700000000?text=${encodedMessage}`;
@@ -100,7 +101,9 @@ export default function Cart() {
                 <div className="w-24 h-24 bg-white rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
                    {/* Fallback image */}
                   <img 
-                    src={item.images?.[0] || ""} 
+                    src={item.images?.[0] ? 
+                      (item.images[0].startsWith('http') ? item.images[0] : `${API_URL}${item.images[0]}`) : 
+                      "https://via.placeholder.com/100"} 
                     alt={item.name}
                     className="w-full h-full object-contain p-2"
                   />
@@ -110,10 +113,10 @@ export default function Cart() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold text-lg">{item.name}</h3>
-                      <p className="text-primary font-bold">KES {(item.price / 100).toLocaleString()}</p>
+                      <p className="text-primary font-bold">KES {(item.price || 0).toLocaleString()}</p>
                     </div>
                     <button 
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.id!)}
                       className="text-muted-foreground hover:text-destructive transition-colors"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -123,7 +126,7 @@ export default function Cart() {
                   <div className="flex items-center gap-4 mt-4">
                     <div className="flex items-center gap-2 bg-secondary rounded-lg p-1">
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.id!, item.quantity - 1)}
                         className="p-1 hover:bg-white rounded-md transition-colors"
                         disabled={item.quantity <= 1}
                       >
@@ -131,14 +134,14 @@ export default function Cart() {
                       </button>
                       <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id!, item.quantity + 1)}
                         className="p-1 hover:bg-white rounded-md transition-colors"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
                     <div className="ml-auto font-medium text-slate-600">
-                      Subtotal: KES {((item.price * item.quantity) / 100).toLocaleString()}
+                      Subtotal: KES {((item.price || 0) * item.quantity).toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -215,7 +218,7 @@ export default function Cart() {
 
                 <div className="flex justify-between items-center text-lg font-bold mb-6">
                   <span>Total</span>
-                  <span>KES {(total / 100).toLocaleString()}</span>
+                  <span>KES {total.toLocaleString()}</span>
                 </div>
 
                 <Button 

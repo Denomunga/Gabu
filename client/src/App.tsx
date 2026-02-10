@@ -11,13 +11,26 @@ import { Footer } from "@/components/Footer";
 import Home from "@/pages/Home";
 import Shop from "@/pages/Shop";
 import ProductDetails from "@/pages/ProductDetails";
+import ServiceDetails from "@/pages/ServiceDetails";
 import Services from "@/pages/Services";
 import Cart from "@/pages/Cart";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import UserProfile from "@/pages/UserProfile";
+import NewsDetail from "@/pages/NewsDetail";
+import NewsList from "@/pages/NewsList";
+import OffersList from "@/pages/OffersList";
+import PagesList from "@/pages/PagesList";
+import PageDetail from "@/pages/PageDetail";
+import About from "@/pages/About";
+import AdminDashboard from "@/pages/AdminDashboard";
+import AdminProducts from "@/pages/AdminProducts";
+import AdminServices from "@/pages/AdminServices";
+import AdminServiceOffices from "@/pages/AdminServiceOffices";
+import AdminPages from "@/pages/AdminPages";
+import AdminNews from "@/pages/AdminNews";
+import AdminUploads from "@/pages/AdminUploads";
 import NotFound from "@/pages/not-found";
-
-// Auth (placeholder for now if pages not fully implemented)
-const Login = () => <div className="p-20 text-center">Login Page Placeholder</div>;
-const Register = () => <div className="p-20 text-center">Register Page Placeholder</div>;
 
 function Router() {
   return (
@@ -26,11 +39,24 @@ function Router() {
       <Route path="/shop" component={Shop} />
       <Route path="/products/:id" component={ProductDetails} />
       <Route path="/services" component={Services} />
+      <Route path="/services/:id" component={ServiceDetails} />
       <Route path="/cart" component={Cart} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
-      {/* 404 Fallback */}
+      <Route path="/profile" component={UserProfile} />
+      <Route path="/news/:id" component={NewsDetail} />
+      <Route path="/news" component={NewsList} />
+      <Route path="/offers" component={OffersList} />
+      <Route path="/about" component={About} />
+      <Route path="/pages" component={PagesList} />
+      <Route path="/pages/:slug" component={PageDetail} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin-products" component={AdminProducts} />
+      <Route path="/admin-services" component={AdminServices} />
+      <Route path="/admin-service-offices" component={AdminServiceOffices} />
+      <Route path="/admin-pages" component={AdminPages} />
+      <Route path="/admin-news" component={AdminNews} />
+      <Route path="/admin-uploads" component={AdminUploads} />
       <Route component={NotFound} />
     </Switch>
   );

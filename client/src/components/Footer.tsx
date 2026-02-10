@@ -11,7 +11,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
                 <Package className="w-5 h-5" />
               </div>
-              MediStore
+              Dr Gabriel
             </Link>
             <p className="text-slate-400 text-sm leading-relaxed">
               Your trusted partner for premium health and wellness products. We deliver quality healthcare solutions directly to your doorstep.
@@ -41,7 +41,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary shrink-0" />
-                <span>support@medistore.co.ke</span>
+                <span>support@Dr_Gabriel.co.ke</span>
               </li>
             </ul>
           </div>
@@ -68,7 +68,7 @@ export function Footer() {
         </div>
         
         <div className="border-t border-slate-800 mt-12 pt-8 text-center text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} MediStore Kenya. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Dr Gabriel Kenya. All rights reserved.</p>
         </div>
       </div>
     </footer>

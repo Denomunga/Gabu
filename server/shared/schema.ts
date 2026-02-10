@@ -29,6 +29,7 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["user", "admin", "super_admin"] }).default("user").notNull(),
   email: text("email"),
   phone: text("phone"),
+  whatsappNumber: text("whatsapp_number"),
   avatarUrl: text("avatar_url"),
   location: text("location"), // Simple location string for profile
   createdAt: timestamp("created_at").defaultNow(),
@@ -42,6 +43,8 @@ export const products = pgTable("products", {
   price: integer("price").notNull(), // Storing in cents or smallest unit
   category: text("category").notNull(),
   images: text("images").array().notNull(), // URLs
+  features: text("features").array(),
+  benefits: text("benefits").array(),
   isFeatured: boolean("is_featured").default(false),
   isTrending: boolean("is_trending").default(false),
   rating: decimal("rating").default("0"),
@@ -54,9 +57,23 @@ export const services = pgTable("services", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  category: text("category").default("General").notNull(),
   benefits: text("benefits").array(),
   images: text("images").array().notNull(),
   isFeatured: boolean("is_featured").default(false),
+  isTrending: boolean("is_trending").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const serviceOffices = pgTable("service_offices", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  address: text("address"),
+  county: text("county"),
+  subCounty: text("sub_county"),
+  area: text("area"),
+  phone: text("phone"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -70,6 +87,14 @@ export const news = pgTable("news", {
   imageUrl: text("image_url"),
   authorName: text("author_name"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const siteSettings = pgTable("site_settings", {
+  id: serial("id").primaryKey(),
+  defaultWhatsappNumber: text("default_whatsapp_number").notNull(),
+  showUrgentBanner: boolean("show_urgent_banner").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Orders Table (for record keeping)
@@ -90,6 +115,7 @@ export const appointments = pgTable("appointments", {
   serviceId: integer("service_id").references(() => services.id),
   date: timestamp("date").notNull(),
   office: text("office").notNull(),
+  officeId: integer("office_id").references(() => serviceOffices.id),
   location: text("location").notNull(), // User's location
   status: text("status").default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -110,7 +136,41 @@ export const favorites = pgTable("favorites", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(),
   productId: integer("product_id").references(() => products.id),
+  serviceId: integer("service_id").references(() => services.id),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const emailChangeRequests = pgTable("email_change_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  newEmail: text("new_email").notNull(),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+export const kenyaCounties = pgTable("kenya_counties", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+});
+
+export const kenyaSubCounties = pgTable("kenya_sub_counties", {
+  id: serial("id").primaryKey(),
+  countyId: integer("county_id").references(() => kenyaCounties.id).notNull(),
+  name: text("name").notNull(),
+});
+
+export const kenyaAreas = pgTable("kenya_areas", {
+  id: serial("id").primaryKey(),
+  subCountyId: integer("sub_county_id").references(() => kenyaSubCounties.id).notNull(),
+  name: text("name").notNull(),
 });
 
 // Relations
@@ -136,6 +196,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   email: true,
   phone: true,
+  whatsappNumber: true,
   role: true, // Only admin can set this ideally, but schema allows it
 });
 
@@ -154,6 +215,30 @@ export const insertServiceSchema = createInsertSchema(services).omit({
 export const insertNewsSchema = createInsertSchema(news).omit({ 
   id: true, 
   createdAt: true 
+});
+
+export const insertServiceOfficeSchema = createInsertSchema(serviceOffices).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSiteSettingsSchema = createInsertSchema(siteSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).omit({
+  id: true,
+  isActive: true,
+  createdAt: true,
+});
+
+export const insertEmailChangeRequestSchema = createInsertSchema(emailChangeRequests).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+  reviewedAt: true,
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ 
@@ -176,6 +261,18 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   createdAt: true 
 });
 
+export type InsertUser = typeof users.$inferInsert;
+export type InsertProduct = typeof products.$inferInsert;
+export type InsertService = typeof services.$inferInsert;
+export type InsertNews = typeof news.$inferInsert;
+export type InsertOrder = typeof orders.$inferInsert;
+export type InsertAppointment = typeof appointments.$inferInsert;
+export type InsertReview = typeof reviews.$inferInsert;
+export type InsertServiceOffice = typeof serviceOffices.$inferInsert;
+export type InsertSiteSettings = typeof siteSettings.$inferInsert;
+export type InsertNewsletterSubscriber = typeof newsletterSubscribers.$inferInsert;
+export type InsertEmailChangeRequest = typeof emailChangeRequests.$inferInsert;
+
 // Types
 export type User = typeof users.$inferSelect;
 export type Product = typeof products.$inferSelect;
@@ -184,3 +281,10 @@ export type News = typeof news.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type Appointment = typeof appointments.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
+export type ServiceOffice = typeof serviceOffices.$inferSelect;
+export type SiteSettings = typeof siteSettings.$inferSelect;
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+export type EmailChangeRequest = typeof emailChangeRequests.$inferSelect;
+export type KenyaCounty = typeof kenyaCounties.$inferSelect;
+export type KenyaSubCounty = typeof kenyaSubCounties.$inferSelect;
+export type KenyaArea = typeof kenyaAreas.$inferSelect;
