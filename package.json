@@ -1,0 +1,13 @@
+{
+  "name": "e-commerce-hub-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:server": "cd server && npm ci",
+    "build": "cd server && npm ci && npm run build",
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev",
+    "check": "cd server && npm run check",
+    "seed": "cd server && npm run seed"
+  }
+}
