@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Users, ShoppingBag, Package, BarChart3, FileText, Megaphone, Stethoscope, Building } from "lucide-react";
 import { API_URL } from "@/lib/api";
+import { useUser } from "@/hooks/use-auth";
 import { AdminProductsContent } from "@/components/admin/AdminProductsContent";
 import { AdminNewsContent } from "@/components/admin/AdminNewsContent";
 import { AdminServicesContent } from "@/components/admin/AdminServicesContent";
@@ -22,27 +23,64 @@ interface Analytics {
 export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [error, setError] = useState<string | null>(null);
   const [, navigate] = useLocation();
+  const { data: user, isLoading: userLoading } = useUser();
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    if (!token) {
+    if (!userLoading && !user) {
       navigate("/login");
       return;
     }
-    fetchAnalytics();
-  }, []);
+    
+    if (!userLoading && user && user.role !== "admin" && user.role !== "super_admin") {
+      setError("You do not have permission to access the admin dashboard");
+      return;
+    }
+    
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
+      fetchAnalytics();
+    }
+  }, [user, userLoading, navigate]);
 
   const fetchAnalytics = async () => {
     try {
+      setError(null);
       const res = await axios.get(`${API_URL}/api/admin/analytics`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAnalytics(res.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching analytics:", error);
+      if (error.response?.status === 403) {
+        setError("You do not have permission to access the admin dashboard");
+      } else {
+        setError("Failed to load analytics");
+      }
     }
   };
+
+  if (userLoading) {
+    return <div className="p-20 text-center">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="p-8 max-w-md text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Go to Home
+          </button>
+        </Card>
+      </div>
+    );
+  }
 
   if (!analytics) {
     return <div className="p-20 text-center">Loading...</div>;
