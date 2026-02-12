@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { useRegister } from "@/hooks/use-auth";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -12,9 +10,9 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [loading, setLoading] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { mutate: register, isPending } = useRegister();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,30 +22,26 @@ export default function Register() {
       return;
     }
 
-    try {
-      setLoading(true);
-      const res = await axios.post(`${API_URL}/api/auth/register`, {
+    register(
+      {
         username,
         email,
         password,
-        phone,
-      });
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      window.dispatchEvent(new Event("auth-changed"));
-      try { (await import('axios')).default.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; } catch {}
-
-      toast({ title: "Success", description: "Account created successfully!" });
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Registration failed",
-      });
-    } finally {
-      setLoading(false);
-    }
+        phone: phone || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "Success", description: "Account created successfully!" });
+          navigate("/");
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Error",
+            description: error.message || "Registration failed",
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -132,8 +126,8 @@ export default function Register() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full h-10">
-              {loading ? "Creating account..." : "Sign Up"}
+            <Button type="submit" disabled={isPending} className="w-full h-10">
+              {isPending ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
 

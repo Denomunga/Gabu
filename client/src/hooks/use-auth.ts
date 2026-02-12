@@ -1,8 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api,  } from "@shared/routes";
+import { api } from "@shared/routes";
+import { API_URL } from "@/lib/api";
 import { z } from "zod";
 import axios from "axios";
 import { type InsertUser } from "@shared/schema";
+import { useEffect } from "react";
+
 // Helper for Login Type since it's defined inline in routes
 const loginSchema = z.object({
   email: z.string().email(),
@@ -11,11 +14,25 @@ const loginSchema = z.object({
 type LoginInput = z.infer<typeof loginSchema>;
 
 export function useUser() {
+  const queryClient = useQueryClient();
+  
+  useEffect(() => {
+    // Refetch user data when auth changes
+    const handleAuthChanged = () => {
+      queryClient.invalidateQueries({ queryKey: [api.auth.me.path] });
+      queryClient.refetchQueries({ queryKey: [api.auth.me.path] });
+    };
+    
+    window.addEventListener("auth-changed", handleAuthChanged);
+    return () => window.removeEventListener("auth-changed", handleAuthChanged);
+  }, [queryClient]);
+  
   return useQuery({
     queryKey: [api.auth.me.path],
     queryFn: async () => {
       const token = localStorage.getItem("token");
-      const res = await fetch(api.auth.me.path, { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+      if (!token) return null;
+      const res = await fetch(`${API_URL}${api.auth.me.path}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch user");
       return api.auth.me.responses[200].parse(await res.json());
@@ -28,7 +45,7 @@ export function useLogin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (credentials: LoginInput) => {
-      const res = await fetch(api.auth.login.path, {
+      const res = await fetch(`${API_URL}${api.auth.login.path}`, {
         method: api.auth.login.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -41,6 +58,7 @@ export function useLogin() {
       // persist token for subsequent requests
       if (payload?.token) {
         localStorage.setItem("token", payload.token);
+        try { (await import('axios')).default.defaults.baseURL = API_URL; } catch {}
         axios.defaults.headers.common["Authorization"] = `Bearer ${payload.token}`;
         window.dispatchEvent(new Event("auth-changed"));
       }
@@ -50,6 +68,7 @@ export function useLogin() {
       // server returns { token, user }
       const u = (user as any)?.user ?? user;
       queryClient.setQueryData([api.auth.me.path], u);
+      queryClient.invalidateQueries({ queryKey: [api.auth.me.path] });
     },
   });
 }
@@ -58,7 +77,7 @@ export function useRegister() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: InsertUser) => {
-      const res = await fetch(api.auth.register.path, {
+      const res = await fetch(`${API_URL}${api.auth.register.path}`, {
         method: api.auth.register.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -73,6 +92,7 @@ export function useRegister() {
       const payload = api.auth.register.responses[201].parse(await res.json());
       if ((payload as any)?.token) {
         localStorage.setItem("token", (payload as any).token);
+        try { (await import('axios')).default.defaults.baseURL = API_URL; } catch {}
         axios.defaults.headers.common["Authorization"] = `Bearer ${(payload as any).token}`;
         window.dispatchEvent(new Event("auth-changed"));
       }
@@ -81,6 +101,7 @@ export function useRegister() {
     onSuccess: (user) => {
       const u = (user as any)?.user ?? user;
       queryClient.setQueryData([api.auth.me.path], u);
+      queryClient.invalidateQueries({ queryKey: [api.auth.me.path] });
     },
   });
 }
@@ -97,7 +118,7 @@ export function useLogout() {
       window.dispatchEvent(new Event("auth-changed"));
     },
     mutationFn: async () => {
-      const res = await axios.post(api.auth.logout.path, undefined, { withCredentials: true });
+      const res = await axios.post(`${API_URL}${api.auth.logout.path}`, undefined, { withCredentials: true });
       if (res.status !== 200 && res.status !== 204) throw new Error("Logout failed");
     },
     onError: () => {

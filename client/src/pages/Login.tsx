@@ -1,43 +1,33 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { useLogin } from "@/hooks/use-auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { mutate: login, isPending } = useLogin();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      setLoading(true);
-      const res = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
-      });
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      // set axios default header
-      try { (await import('axios')).default.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`; } catch {}
-      window.dispatchEvent(new Event("auth-changed"));
-
-      toast({ title: "Success", description: "Logged in successfully!" });
-      navigate("/");
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Login failed",
-      });
-    } finally {
-      setLoading(false);
-    }
+    login(
+      { email, password },
+      {
+        onSuccess: () => {
+          toast({ title: "Success", description: "Logged in successfully!" });
+          navigate("/");
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Error",
+            description: error.message || "Login failed",
+          });
+        },
+      }
+    );
   };
 
   return (
@@ -80,10 +70,10 @@ export default function Login() {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="w-full h-10"
             >
-              {loading ? "Logging in..." : "Login"}
+              {isPending ? "Logging in..." : "Login"}
             </Button>
           </form>
 
